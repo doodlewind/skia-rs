@@ -80,6 +80,12 @@ impl Context {
         Property::new(&env, "shadowOffsetY")?
           .with_setter(set_shadow_offset_y)
           .with_getter(get_shadow_offset_y),
+        Property::new(&env, "textAlign")?
+          .with_setter(set_text_align)
+          .with_getter(get_text_align),
+        Property::new(&env, "textBaseline")?
+          .with_setter(set_text_baseline)
+          .with_getter(get_text_baseline),
         // methods
         Property::new(&env, "arc")?.with_method(arc),
         Property::new(&env, "arcTo")?.with_method(arc_to),
@@ -1431,6 +1437,46 @@ fn set_shadow_offset_y(ctx: CallContext) -> Result<JsUndefined> {
   last_state.shadow_offset_y = offset as f32;
 
   ctx.env.get_undefined()
+}
+
+#[js_function(1)]
+fn set_text_align(ctx: CallContext) -> Result<JsUndefined> {
+  let this = ctx.this_unchecked::<JsObject>();
+  let context_2d = ctx.env.unwrap::<Context>(&this)?;
+
+  context_2d.states.last_mut().unwrap().text_align =
+    TextAlign::from_str(ctx.get::<JsString>(0)?.into_utf8()?.as_str()?)?;
+  ctx.env.get_undefined()
+}
+
+#[js_function]
+fn get_text_align(ctx: CallContext) -> Result<JsString> {
+  let this = ctx.this_unchecked::<JsObject>();
+  let context_2d = ctx.env.unwrap::<Context>(&this)?;
+
+  ctx
+    .env
+    .create_string(context_2d.states.last().unwrap().text_align.as_str())
+}
+
+#[js_function(1)]
+fn set_text_baseline(ctx: CallContext) -> Result<JsUndefined> {
+  let this = ctx.this_unchecked::<JsObject>();
+  let context_2d = ctx.env.unwrap::<Context>(&this)?;
+
+  context_2d.states.last_mut().unwrap().text_baseline =
+    TextBaseline::from_str(ctx.get::<JsString>(0)?.into_utf8()?.as_str()?)?;
+  ctx.env.get_undefined()
+}
+
+#[js_function]
+fn get_text_baseline(ctx: CallContext) -> Result<JsString> {
+  let this = ctx.this_unchecked::<JsObject>();
+  let context_2d = ctx.env.unwrap::<Context>(&this)?;
+
+  ctx
+    .env
+    .create_string(context_2d.states.last().unwrap().text_baseline.as_str())
 }
 
 pub enum ContextData {
