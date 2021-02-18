@@ -16,8 +16,15 @@ async function main() {
   const canvas = createCanvas(w, h)
   const ctx = canvas.getContext('2d')
 
+  ctx.shadowColor = 'rgba(0, 255, 0, .8)'
+  ctx.shadowBlur = 8
+  ctx.shadowOffsetX = 50
+  ctx.shadowOffsetY = 50
+  // ctx.drawImage(image, 0, 0, w / 2, h / 2)
+  ctx.fillRect(0, 0, 200, 200)
+
   // fill the canvas with the image
-  ctx.drawImage(image, 0, 0)
+  // ctx.drawImage(image, 0, 0)
 
   // fill a quarter of the canvas with image
   // ctx.drawImage(image, 0, 0, w / 2, h / 2)

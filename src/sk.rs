@@ -179,6 +179,7 @@ mod ffi {
       dy: f32,
       d_width: f32,
       d_height: f32,
+      paint: *mut skiac_paint,
     );
 
     pub fn skiac_canvas_draw_path(
@@ -1205,10 +1206,11 @@ impl Canvas {
     dy: f32,
     d_width: f32,
     d_height: f32,
+    paint: &Paint,
   ) {
     unsafe {
       ffi::skiac_canvas_draw_image(
-        self.0, image, sx, sy, s_width, s_height, dx, dy, d_width, d_height,
+        self.0, image, sx, sy, s_width, s_height, dx, dy, d_width, d_height, paint.0,
       );
     }
   }

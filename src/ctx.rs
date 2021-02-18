@@ -353,10 +353,57 @@ impl Context {
       shadow_color.blue,
       shadow_color.alpha,
     );
+    println!("alpha {} color {} {} {}", alpha, shadow_color.red, shadow_color.green, shadow_color.blue);
     shadow_paint.set_alpha(shadow_alpha);
     let blur_effect = MaskFilter::make_blur(last_state.shadow_blur / 2f32)?;
     shadow_paint.set_mask_filter(&blur_effect);
     Some(shadow_paint)
+  }
+
+  #[inline(always)]
+  fn draw_image(
+    &mut self,
+    image: &Image,
+    sx: f32,
+    sy: f32,
+    s_width: f32,
+    s_height: f32,
+    dx: f32,
+    dy: f32,
+    d_width: f32,
+    d_height: f32,
+  ) -> Result<()> {
+    let bitmap = image.bitmap.as_ref().unwrap().bitmap;
+    let paint = self.fill_paint()?;
+    if let Some(shadow_paint) = self.shadow_paint(&paint) {
+      let surface = &mut self.surface;
+      let last_state = self.states.last().unwrap();
+      surface.save();
+      Self::apply_shadow_offset_matrix(
+        surface,
+        last_state.shadow_offset_x,
+        last_state.shadow_offset_y,
+      )?;
+      surface.canvas.draw_image(
+        bitmap,
+        sx,
+        sy,
+        s_width,
+        s_height,
+        dx,
+        dy,
+        d_width,
+        d_height,
+        &shadow_paint,
+      );
+      surface.restore();
+    } else {
+      self.surface.canvas.draw_image(
+        bitmap, sx, sy, s_width, s_height, dx, dy, d_width, d_height, &paint,
+      );
+    }
+
+    Ok(())
   }
 
   #[inline(always)]
@@ -654,16 +701,16 @@ fn draw_image(ctx: CallContext) -> Result<JsUndefined> {
   if ctx.length == 3 {
     let dx: f64 = ctx.get::<JsNumber>(1)?.try_into()?;
     let dy: f64 = ctx.get::<JsNumber>(2)?.try_into()?;
-    context_2d.surface.canvas.draw_image(
-      bitmap, 0f32, 0f32, image_w, image_h, dx as f32, dy as f32, image_w, image_h,
-    );
+    context_2d.draw_image(
+      image, 0f32, 0f32, image_w, image_h, dx as f32, dy as f32, image_w, image_h,
+    )?;
   } else if ctx.length == 5 {
     let dx: f64 = ctx.get::<JsNumber>(1)?.try_into()?;
     let dy: f64 = ctx.get::<JsNumber>(2)?.try_into()?;
     let d_width: f64 = ctx.get::<JsNumber>(3)?.try_into()?;
     let d_height: f64 = ctx.get::<JsNumber>(4)?.try_into()?;
-    context_2d.surface.canvas.draw_image(
-      bitmap,
+    context_2d.draw_image(
+      image,
       0f32,
       0f32,
       image_w,
@@ -672,7 +719,7 @@ fn draw_image(ctx: CallContext) -> Result<JsUndefined> {
       dy as f32,
       d_width as f32,
       d_height as f32,
-    );
+    )?;
   } else if ctx.length == 9 {
     let sx: f64 = ctx.get::<JsNumber>(1)?.try_into()?;
     let sy: f64 = ctx.get::<JsNumber>(2)?.try_into()?;
@@ -682,8 +729,8 @@ fn draw_image(ctx: CallContext) -> Result<JsUndefined> {
     let dy: f64 = ctx.get::<JsNumber>(6)?.try_into()?;
     let d_width: f64 = ctx.get::<JsNumber>(7)?.try_into()?;
     let d_height: f64 = ctx.get::<JsNumber>(8)?.try_into()?;
-    context_2d.surface.canvas.draw_image(
-      bitmap,
+    context_2d.draw_image(
+      image,
       sx as f32,
       sy as f32,
       s_width as f32,
@@ -692,7 +739,7 @@ fn draw_image(ctx: CallContext) -> Result<JsUndefined> {
       dy as f32,
       d_width as f32,
       d_height as f32,
-    );
+    )?;
   }
 
   ctx.env.get_undefined()
