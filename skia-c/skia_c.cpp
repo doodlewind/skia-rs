@@ -291,7 +291,7 @@ extern "C"
       float y,
       float max_width,
       int weight,
-      int width,
+      int stretch,
       int slant,
       skiac_font_collection *font_collection,
       float font_size,
@@ -302,7 +302,7 @@ extern "C"
       skiac_paint *c_paint)
   {
     TextStyle text_style;
-    auto font_style = SkFontStyle(weight, width, (SkFontStyle::Slant)slant);
+    auto font_style = SkFontStyle(weight, stretch, (SkFontStyle::Slant)slant);
     const std::vector<SkString> families = {SkString(font_family)};
     text_style.setFontFamilies(families);
     text_style.setFontSize(font_size);
@@ -348,18 +348,25 @@ extern "C"
       const char *text,
       skiac_font_collection *c_collection,
       float font_size,
+      int weight,
+      int stretch,
+      int slant,
       const char *font_family,
       uint8_t align,
       float align_factor,
       skiac_paint *c_paint)
   {
     auto font_collection = c_collection->collection;
-
+    auto font_style = SkFontStyle(weight, stretch, (SkFontStyle::Slant)slant);
+    const std::vector<SkString> families = {SkString(font_family)};
+    auto typefaces = c_collection->collection->findTypefaces(families, font_style);
+    auto typeface = typefaces[0];
     TextStyle text_style;
-    text_style.setFontFamilies({SkString(font_family)});
+    text_style.setFontFamilies(families);
     text_style.setFontSize(font_size);
     text_style.setWordSpacing(0);
     text_style.setHeight(1);
+    text_style.setFontStyle(font_style);
 
     ParagraphStyle paragraph_style;
     paragraph_style.turnHintingOff();
@@ -369,18 +376,19 @@ extern "C"
     auto builder = ParagraphBuilder::make(paragraph_style, font_collection);
     builder->addText(text, strlen(text));
 
-    auto paragraph = builder->Build();
+    auto paragraph = reinterpret_cast<ParagraphImpl *>(builder->Build().release());
     paragraph->layout(MAX_LAYOUT_WIDTH);
 
     auto metrics_vec = std::vector<LineMetrics>();
     paragraph->getLineMetrics(metrics_vec);
     auto line_metrics = metrics_vec[0];
-    SkDebugf("ascent %f\ndescent %f\nleft %f\nwidth %f\nbaseline %f\n",
+    auto rect = typeface->getBounds();
+    SkDebugf("ascent %f\ndescent %f\nleft %f\nwidth %f\nbaseline %f\n rect.left %f, rect.top %f, rect.right %f, rect.bottom %f, rect.width %f, rect.height %f",
              line_metrics.fAscent,
              line_metrics.fDescent,
              line_metrics.fLeft,
              line_metrics.fWidth,
-             line_metrics.fBaseline);
+             line_metrics.fBaseline, rect.fLeft, rect.fTop, rect.fRight, rect.fBottom, rect.width(), rect.height());
     skiac_line_metrics result;
     result.ascent = line_metrics.fAscent;
     result.descent = line_metrics.fDescent;
@@ -1151,20 +1159,15 @@ extern "C"
     return new skiac_font_collection();
   }
 
-  skiac_font_collection *skiac_font_collection_clone(skiac_font_collection *c_font_collection)
-  {
-    return new skiac_font_collection(c_font_collection->collection);
-  }
-
   uint32_t skiac_font_collection_get_default_fonts_count(skiac_font_collection *c_font_collection)
   {
-    return c_font_collection->font_mgr->countFamilies();
+    return c_font_collection->assets->countFamilies();
   }
 
   void skiac_font_collection_get_family(skiac_font_collection *c_font_collection, uint32_t i, skiac_string *c_string)
   {
     auto name = new SkString();
-    c_font_collection->font_mgr->getFamilyName(i, name);
+    c_font_collection->assets->getFamilyName(i, name);
     c_string->length = name->size();
     c_string->ptr = name->c_str();
     c_string->sk_string = name;

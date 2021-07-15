@@ -200,7 +200,7 @@ extern "C"
       float y,
       float max_width,
       int weight,
-      int width,
+      int stretch,
       int slant,
       skiac_font_collection *font_collection,
       float font_size,
@@ -213,6 +213,9 @@ extern "C"
       const char *text,
       skiac_font_collection *c_collection,
       float font_size,
+      int weight,
+      int stretch,
+      int slant,
       const char *font_family,
       uint8_t align,
       float align_factor,
@@ -376,7 +379,6 @@ extern "C"
 
   // FontCollection
   skiac_font_collection *skiac_font_collection_create();
-  skiac_font_collection *skiac_font_collection_clone(skiac_font_collection *c_font_collection);
   uint32_t skiac_font_collection_get_default_fonts_count(skiac_font_collection *c_font_collection);
   void skiac_font_collection_get_family(skiac_font_collection *c_font_collection, uint32_t i, skiac_string *c_string);
   size_t skiac_font_collection_register(skiac_font_collection *c_font_collection, const uint8_t *font, size_t length);

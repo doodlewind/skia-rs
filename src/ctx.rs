@@ -495,7 +495,7 @@ impl Context {
         y,
         max_width,
         weight,
-        stretch as u32,
+        stretch as i32,
         slant,
         &self.font_collection,
         state.font_style.size,
@@ -513,7 +513,7 @@ impl Context {
       y,
       max_width,
       weight,
-      stretch as u32,
+      stretch as i32,
       slant,
       &self.font_collection,
       state.font_style.size,
@@ -529,11 +529,16 @@ impl Context {
   fn get_line_metrics(&mut self, text: &str) -> result::Result<LineMetrics, SkError> {
     let state = self.states.last().unwrap();
     let fill_paint = self.fill_paint()?;
-
+    let weight = state.font_style.weight;
+    let stretch = state.font_style.stretch;
+    let slant = state.font_style.style;
     let line_metrics = LineMetrics(self.surface.canvas.get_line_metrics(
       text,
       &self.font_collection,
       state.font_style.size,
+      weight,
+      stretch as i32,
+      slant,
       &state.font_style.family,
       state.text_align,
       &fill_paint,

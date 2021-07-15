@@ -330,6 +330,9 @@ mod ffi {
       text: *const ::std::os::raw::c_char,
       font_collection: *mut skiac_font_collection,
       font_size: f32,
+      weight: i32,
+      width: i32,
+      slant: i32,
       font_family: *const ::std::os::raw::c_char,
       align: u8,
       align_factor: f32,
@@ -648,10 +651,6 @@ mod ffi {
     pub fn skiac_font_metrics_destroy(c_font_metrics: *mut skiac_font_metrics);
 
     pub fn skiac_font_collection_create() -> *mut skiac_font_collection;
-
-    pub fn skiac_font_collection_clone(
-      c_font_collection: *mut skiac_font_collection,
-    ) -> *mut skiac_font_collection;
 
     pub fn skiac_font_collection_get_default_fonts_count(
       c_font_collection: *mut skiac_font_collection,
@@ -1627,7 +1626,7 @@ impl Canvas {
     y: f32,
     max_width: f32,
     weight: u32,
-    width: u32,
+    stretch: i32,
     slant: FontStyle,
     font_collection: &FontCollection,
     font_size: f32,
@@ -1657,7 +1656,7 @@ impl Canvas {
         y,
         max_width,
         weight as i32,
-        width as i32,
+        stretch,
         slant as i32,
         font_collection.0,
         font_size,
@@ -1676,6 +1675,9 @@ impl Canvas {
     text: &str,
     font_collection: &FontCollection,
     font_size: f32,
+    weight: u32,
+    stretch: i32,
+    slant: FontStyle,
     font_family: &str,
     align: TextAlign,
     paint: &Paint,
@@ -1695,6 +1697,9 @@ impl Canvas {
         c_text.as_ptr(),
         font_collection.0,
         font_size,
+        weight as i32,
+        stretch,
+        slant as i32,
         c_font_family.as_ptr(),
         align as u8,
         align_factor,
@@ -2902,15 +2907,6 @@ impl FontCollection {
       unsafe { ffi::skiac_font_collection_register_from_path(self.0, fp.as_ptr()) > 0 }
     } else {
       false
-    }
-  }
-}
-
-impl Clone for FontCollection {
-  fn clone(&self) -> FontCollection {
-    unsafe {
-      let c_font_collection = ffi::skiac_font_collection_clone(self.0);
-      FontCollection(c_font_collection)
     }
   }
 }
